@@ -17,7 +17,7 @@ COPY db/ db/
 
 # Strip deps not needed in the gqlgen stage (e.g. River) so go mod tidy
 # doesn't fail trying to resolve them.
-RUN sed -i '/riverqueue/d' go.mod && go mod tidy
+RUN sed -i '/riverqueue/d; /openai/d; /google.golang.org\/genai/d' go.mod && go mod tidy
 RUN go run github.com/99designs/gqlgen generate
 
 # ==============================================================================

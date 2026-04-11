@@ -36,6 +36,7 @@ func (r *mutationResolver) SendMessage(ctx context.Context, room string, sender 
 		Sender:    sender,
 		Text:      text,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Upvotes:   0,
 	}
 
 	if err := r.DB.SaveMessage(ctx, msg); err != nil {
@@ -64,6 +65,71 @@ func (r *mutationResolver) SendMessage(ctx context.Context, room string, sender 
 	return msg, nil
 }
 
+// SurpriseMe is the resolver for the surpriseMe field.
+func (r *mutationResolver) SurpriseMe(ctx context.Context, room string, sender string, text string) (*model.Message, error) {
+	msg := &model.Message{
+		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
+		Room:      room,
+		Sender:    sender,
+		Text:      text,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Upvotes:   0,
+	}
+
+	if err := r.DB.SaveMessage(ctx, msg); err != nil {
+		return nil, fmt.Errorf("failed to save message: %w", err)
+	}
+
+	// Fan-out to chat subscribers so the message appears in real-time for everyone.
+	r.mu.Lock()
+	for _, sub := range r.subscribers {
+		if sub.room == room {
+			select {
+			case sub.ch <- msg:
+			default:
+			}
+		}
+	}
+	r.mu.Unlock()
+
+	// Enqueue the surprise_upvote job.
+	if r.InsertSurpriseJob != nil {
+		if err := r.InsertSurpriseJob(msg.ID); err != nil {
+			log.Printf("Failed to enqueue surprise job for message %s: %v", msg.ID, err)
+		}
+	}
+
+	return msg, nil
+}
+
+// SubmitCalorieQuery is the resolver for the submitCalorieQuery field.
+func (r *mutationResolver) SubmitCalorieQuery(ctx context.Context, mealText string, modelName string) (*model.CalorieQuery, error) {
+	mealText = strings.TrimSpace(mealText)
+	if mealText == "" {
+		return nil, fmt.Errorf("meal text cannot be empty")
+	}
+
+	q := &model.CalorieQuery{
+		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
+		MealText:  mealText,
+		Model:     modelName,
+		Status:    "pending",
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	if err := r.DB.SaveCalorieQuery(ctx, q); err != nil {
+		return nil, fmt.Errorf("failed to save calorie query: %w", err)
+	}
+
+	if r.InsertCalorieJob != nil {
+		if err := r.InsertCalorieJob(q.ID); err != nil {
+			log.Printf("Failed to enqueue calorie job for query %s: %v", q.ID, err)
+		}
+	}
+
+	return q, nil
+}
+
 // Rooms is the resolver for the rooms field.
 func (r *queryResolver) Rooms(ctx context.Context) ([]*model.Room, error) {
 	return r.DB.GetRooms(ctx)
@@ -72,6 +138,11 @@ func (r *queryResolver) Rooms(ctx context.Context) ([]*model.Room, error) {
 // Messages is the resolver for the messages field.
 func (r *queryResolver) Messages(ctx context.Context, room string) ([]*model.Message, error) {
 	return r.DB.GetMessages(ctx, room)
+}
+
+// CalorieQueries is the resolver for the calorieQueries field.
+func (r *queryResolver) CalorieQueries(ctx context.Context) ([]*model.CalorieQuery, error) {
+	return r.DB.GetCalorieQueries(ctx)
 }
 
 // MessageSent is the resolver for the messageSent field.
@@ -109,6 +180,48 @@ func (r *subscriptionResolver) JobCompleted(ctx context.Context, room string, se
 		<-ctx.Done()
 		r.mu.Lock()
 		delete(r.jobSubscribers, id)
+		close(ch)
+		r.mu.Unlock()
+	}()
+
+	return ch, nil
+}
+
+// SurpriseUpvoteCompleted is the resolver for the surpriseUpvoteCompleted field.
+func (r *subscriptionResolver) SurpriseUpvoteCompleted(ctx context.Context, room string) (<-chan *model.Message, error) {
+	ch := make(chan *model.Message, 1)
+
+	r.mu.Lock()
+	id := r.nextID
+	r.nextID++
+	r.surpriseSubscribers[id] = &surpriseSubscriber{room: room, ch: ch}
+	r.mu.Unlock()
+
+	go func() {
+		<-ctx.Done()
+		r.mu.Lock()
+		delete(r.surpriseSubscribers, id)
+		close(ch)
+		r.mu.Unlock()
+	}()
+
+	return ch, nil
+}
+
+// CalorieQueryCompleted is the resolver for the calorieQueryCompleted field.
+func (r *subscriptionResolver) CalorieQueryCompleted(ctx context.Context) (<-chan *model.CalorieQuery, error) {
+	ch := make(chan *model.CalorieQuery, 1)
+
+	r.mu.Lock()
+	id := r.nextID
+	r.nextID++
+	r.calorieSubscribers[id] = &calorieSubscriber{ch: ch}
+	r.mu.Unlock()
+
+	go func() {
+		<-ctx.Done()
+		r.mu.Lock()
+		delete(r.calorieSubscribers, id)
 		close(ch)
 		r.mu.Unlock()
 	}()

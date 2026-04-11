@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calorie Counter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding-top: 40px;
+    }
+
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0 1.25rem;
+      z-index: 30;
+      font-size: 0.85rem;
+    }
+
+    .top-nav a {
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+
+    .top-nav a.active { color: #38bdf8; }
+    .top-nav a:not(.active) { color: #64748b; }
+    .top-nav a:hover { color: #7dd3fc; }
+
+    /* ---- Two-panel layout ---- */
+    .layout {
+      display: flex;
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 1.5rem auto;
+      padding: 0 1.25rem;
+      align-items: flex-start;
+    }
+
+    .left-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .right-panel {
+      width: 340px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 56px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .right-panel { width: 100%; position: static; }
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      color: #f8fafc;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-row:last-child { margin-bottom: 0; }
+
+    textarea {
+      flex: 1;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: vertical;
+      min-height: 60px;
+      outline: none;
+    }
+
+    textarea:focus { border-color: #38bdf8; }
+
+    select {
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      min-width: 200px;
+    }
+
+    select:focus { border-color: #38bdf8; }
+
+    button {
+      padding: 0.65rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: #38bdf8;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #7dd3fc; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #475569;
+    }
+
+    .status-dot.connected { background: #4ade80; }
+
+    .results-header {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 1rem;
+    }
+
+    .result-item {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.3s;
+    }
+
+    .result-item.pending {
+      border-color: #475569;
+      opacity: 0.7;
+    }
+
+    .result-item.completed { border-color: #4ade80; }
+    .result-item.failed { border-color: #f87171; }
+
+    .result-meal {
+      font-size: 0.9rem;
+      color: #f8fafc;
+      margin-bottom: 0.5rem;
+      word-wrap: break-word;
+    }
+
+    .result-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .result-calories {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #4ade80;
+    }
+
+    .result-error {
+      font-size: 0.8rem;
+      color: #f87171;
+      margin-top: 0.25rem;
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .badge-model { background: #312e81; color: #a5b4fc; }
+    .badge-time  { background: #1e3a5f; color: #7dd3fc; }
+    .badge-tokens { background: #1a2e1a; color: #4ade80; }
+    .badge-pending { background: #44403c; color: #fbbf24; }
+
+    .empty-state {
+      text-align: center;
+      color: #475569;
+      padding: 2rem;
+      font-size: 0.9rem;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-10px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .result-item.new { animation: slideIn 0.3s ease-out; }
+
+    /* ---- Right panel: Model stats ---- */
+    .stats-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 1rem;
+    }
+
+    .stats-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .stats-model-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 0.2rem;
+    }
+
+    .stats-row:last-child { margin-bottom: 0; }
+
+    .stats-value {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .stats-value.time { color: #7dd3fc; }
+    .stats-value.tokens { color: #4ade80; }
+    .stats-value.runs { color: #fbbf24; }
+
+    .stats-empty {
+      text-align: center;
+      color: #475569;
+      font-size: 0.8rem;
+      padding: 1.5rem;
+    }
+
+    .stats-provider-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .stats-provider-label:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a href="/">Chat</a>
+    <a href="/calories" class="active">Calorie Counter</a>
+  </nav>
+
+  <div class="layout">
+    <!-- Left panel: Input + Results -->
+    <div class="left-panel">
+      <h1>Calorie Counter</h1>
+      <p class="subtitle">Describe a meal and an LLM will estimate the calories</p>
+
+      <div class="card">
+        <div class="form-row">
+          <textarea id="meal-input" placeholder="Describe your meal... e.g. Two eggs, toast with butter, and a glass of orange juice"></textarea>
+        </div>
+        <div class="form-row">
+          <select id="model-select">
+            <optgroup label="OpenAI">
+              <option value="gpt-5.4-mini">GPT-5.4 Mini</option>
+              <option value="gpt-5.4-nano">GPT-5.4 Nano</option>
+              <option value="gpt-5.4">GPT-5.4</option>
+            </optgroup>
+            <optgroup label="Google Gemini">
+              <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+              <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
+              <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+              <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
+            </optgroup>
+          </select>
+          <button id="submit-btn" onclick="submitQuery()">Estimate Calories</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Connecting...</span>
+      </div>
+
+      <div class="results-header">Results</div>
+      <div id="results-list">
+        <div class="empty-state" id="empty-state">No queries yet — describe a meal above to get started</div>
+      </div>
+    </div>
+
+    <!-- Right panel: Model stats -->
+    <div class="right-panel">
+      <div class="stats-title">Model Averages</div>
+      <div id="stats-container">
+        <div class="stats-empty" id="stats-empty">Run some queries to see model stats</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var API_URL = "{{.APIURL}}";
+    var WS_URL  = "{{.WSURL}}";
+    var ws = null;
+    var allQueries = []; // keep all completed queries for stats
+
+    // ---- Load existing queries on page load ----
+
+    async function loadQueries() {
+      try {
+        var res = await fetch(API_URL + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: "{ calorieQueries { id mealText model calories responseTimeMs totalTokens status errorMessage createdAt } }"
+          })
+        });
+        var json = await res.json();
+        if (json.data && json.data.calorieQueries) {
+          var list = document.getElementById("results-list");
+          var empty = document.getElementById("empty-state");
+          if (json.data.calorieQueries.length > 0) empty.style.display = "none";
+          json.data.calorieQueries.forEach(function(q) {
+            list.appendChild(createResultItem(q, false));
+            if (q.status === "completed") allQueries.push(q);
+          });
+          renderStats();
+        }
+      } catch (err) {
+        console.error("Failed to load queries:", err);
+      }
+    }
+
+    // ---- Submit a calorie query ----
+
+    async function submitQuery() {
+      var input = document.getElementById("meal-input");
+      var select = document.getElementById("model-select");
+      var text = input.value.trim();
+      if (!text) return;
+
+      var model = select.value;
+      input.value = "";
+
+      document.getElementById("submit-btn").disabled = true;
+
+      try {
+        var res = await fetch(API_URL + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: "mutation($mealText: String!, $modelName: String!) { submitCalorieQuery(mealText: $mealText, modelName: $modelName) { id mealText model status createdAt } }",
+            variables: { mealText: text, modelName: model }
+          })
+        });
+        var json = await res.json();
+        if (json.data && json.data.submitCalorieQuery) {
+          addResult(json.data.submitCalorieQuery);
+        }
+        if (json.errors) {
+          console.error("GraphQL errors:", json.errors);
+        }
+      } catch (err) {
+        console.error("Failed to submit:", err);
+      }
+
+      document.getElementById("submit-btn").disabled = false;
+      input.focus();
+    }
+
+    // ---- WebSocket subscription ----
+
+    function connectWebSocket() {
+      if (ws) { ws.close(); ws = null; }
+
+      ws = new WebSocket(WS_URL + "/query", "graphql-transport-ws");
+
+      ws.onopen = function() {
+        ws.send(JSON.stringify({ type: "connection_init" }));
+      };
+
+      ws.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+
+        if (data.type === "connection_ack") {
+          setStatus(true);
+          ws.send(JSON.stringify({
+            id: "1",
+            type: "subscribe",
+            payload: {
+              query: "subscription { calorieQueryCompleted { id mealText model calories responseTimeMs totalTokens status errorMessage createdAt } }"
+            }
+          }));
+        }
+
+        if (data.type === "next" && data.payload && data.payload.data) {
+          if (data.payload.data.calorieQueryCompleted) {
+            var q = data.payload.data.calorieQueryCompleted;
+            updateResult(q);
+            if (q.status === "completed") {
+              // Remove old entry for this id if exists, then add updated
+              allQueries = allQueries.filter(function(x) { return x.id !== q.id; });
+              allQueries.push(q);
+              renderStats();
+            }
+          }
+        }
+      };
+
+      ws.onclose = function() {
+        setStatus(false);
+        setTimeout(function() { connectWebSocket(); }, 2000);
+      };
+
+      ws.onerror = function() { ws.close(); };
+    }
+
+    // ---- UI helpers ----
+
+    function addResult(q) {
+      var list = document.getElementById("results-list");
+      var empty = document.getElementById("empty-state");
+      empty.style.display = "none";
+
+      var existing = document.getElementById("result-" + q.id);
+      if (existing) return;
+
+      var item = createResultItem(q, true);
+      list.insertBefore(item, list.firstChild);
+    }
+
+    function updateResult(q) {
+      var existing = document.getElementById("result-" + q.id);
+      if (existing) {
+        var newItem = createResultItem(q, true);
+        existing.replaceWith(newItem);
+      } else {
+        addResult(q);
+      }
+    }
+
+    function createResultItem(q, isNew) {
+      var item = document.createElement("div");
+      item.className = "result-item " + q.status;
+      if (isNew) item.classList.add("new");
+      item.id = "result-" + q.id;
+
+      var meal = document.createElement("div");
+      meal.className = "result-meal";
+      meal.textContent = q.mealText;
+      item.appendChild(meal);
+
+      if (q.status === "completed" && q.calories !== null && q.calories !== undefined) {
+        var cal = document.createElement("div");
+        cal.className = "result-calories";
+        cal.textContent = q.calories.toLocaleString() + " calories";
+        item.appendChild(cal);
+      }
+
+      if (q.status === "failed" && q.errorMessage) {
+        var err = document.createElement("div");
+        err.className = "result-error";
+        err.textContent = "Error: " + q.errorMessage;
+        item.appendChild(err);
+      }
+
+      var meta = document.createElement("div");
+      meta.className = "result-meta";
+
+      var modelBadge = document.createElement("span");
+      modelBadge.className = "result-badge badge-model";
+      modelBadge.textContent = q.model;
+      meta.appendChild(modelBadge);
+
+      if (q.status === "pending") {
+        var pendingBadge = document.createElement("span");
+        pendingBadge.className = "result-badge badge-pending";
+        pendingBadge.textContent = "Processing...";
+        meta.appendChild(pendingBadge);
+      }
+
+      if (q.responseTimeMs !== null && q.responseTimeMs !== undefined) {
+        var timeBadge = document.createElement("span");
+        timeBadge.className = "result-badge badge-time";
+        if (q.responseTimeMs >= 1000) {
+          timeBadge.textContent = (q.responseTimeMs / 1000).toFixed(1) + "s";
+        } else {
+          timeBadge.textContent = q.responseTimeMs + "ms";
+        }
+        meta.appendChild(timeBadge);
+      }
+
+      if (q.totalTokens !== null && q.totalTokens !== undefined && q.totalTokens > 0) {
+        var tokensBadge = document.createElement("span");
+        tokensBadge.className = "result-badge badge-tokens";
+        tokensBadge.textContent = q.totalTokens.toLocaleString() + " tokens";
+        meta.appendChild(tokensBadge);
+      }
+
+      var dateBadge = document.createElement("span");
+      dateBadge.style.cssText = "font-size: 0.7rem; color: #64748b;";
+      dateBadge.textContent = formatTime(q.createdAt);
+      meta.appendChild(dateBadge);
+
+      item.appendChild(meta);
+      return item;
+    }
+
+    // ---- Model stats panel ----
+
+    var openAIModelSet = {"gpt-5.4":1,"gpt-5.4-mini":1,"gpt-5.4-nano":1};
+
+    function renderStats() {
+      var container = document.getElementById("stats-container");
+      var emptyEl = document.getElementById("stats-empty");
+
+      // Group completed queries by model
+      var byModel = {};
+      allQueries.forEach(function(q) {
+        if (q.status !== "completed") return;
+        if (!byModel[q.model]) byModel[q.model] = [];
+        byModel[q.model].push(q);
+      });
+
+      var models = Object.keys(byModel);
+      if (models.length === 0) {
+        emptyEl.style.display = "";
+        return;
+      }
+      emptyEl.style.display = "none";
+
+      // Split into OpenAI and Gemini
+      var openaiModels = models.filter(function(m) { return openAIModelSet[m]; });
+      var geminiModels = models.filter(function(m) { return !openAIModelSet[m]; });
+
+      // Sort each group by avg time (fastest first)
+      function avgTime(m) {
+        var arr = byModel[m];
+        var sum = 0;
+        arr.forEach(function(q) { sum += (q.responseTimeMs || 0); });
+        return sum / arr.length;
+      }
+      openaiModels.sort(function(a, b) { return avgTime(a) - avgTime(b); });
+      geminiModels.sort(function(a, b) { return avgTime(a) - avgTime(b); });
+
+      // Clear existing stats (except empty placeholder)
+      var children = container.querySelectorAll(".stats-provider-label, .stats-card");
+      for (var i = 0; i < children.length; i++) container.removeChild(children[i]);
+
+      function renderGroup(label, modelList) {
+        if (modelList.length === 0) return;
+        var labelEl = document.createElement("div");
+        labelEl.className = "stats-provider-label";
+        labelEl.textContent = label;
+        container.appendChild(labelEl);
+
+        modelList.forEach(function(m) {
+          var arr = byModel[m];
+          var totalTime = 0, totalTokens = 0, tokenCount = 0;
+          arr.forEach(function(q) {
+            totalTime += (q.responseTimeMs || 0);
+            if (q.totalTokens) { totalTokens += q.totalTokens; tokenCount++; }
+          });
+          var avgMs = Math.round(totalTime / arr.length);
+          var avgTok = tokenCount > 0 ? Math.round(totalTokens / tokenCount) : null;
+
+          var card = document.createElement("div");
+          card.className = "stats-card";
+
+          var name = document.createElement("div");
+          name.className = "stats-model-name";
+          name.textContent = m;
+          card.appendChild(name);
+
+          card.appendChild(makeStatsRow("Avg time", formatMs(avgMs), "time"));
+          if (avgTok !== null) {
+            card.appendChild(makeStatsRow("Avg tokens", avgTok.toLocaleString(), "tokens"));
+          }
+          card.appendChild(makeStatsRow("Runs", arr.length.toString(), "runs"));
+
+          container.appendChild(card);
+        });
+      }
+
+      renderGroup("OpenAI", openaiModels);
+      renderGroup("Gemini", geminiModels);
+    }
+
+    function makeStatsRow(label, value, cls) {
+      var row = document.createElement("div");
+      row.className = "stats-row";
+      var labelEl = document.createElement("span");
+      labelEl.textContent = label;
+      var valueEl = document.createElement("span");
+      valueEl.className = "stats-value " + cls;
+      valueEl.textContent = value;
+      row.appendChild(labelEl);
+      row.appendChild(valueEl);
+      return row;
+    }
+
+    function formatMs(ms) {
+      if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
+      return ms + "ms";
+    }
+
+    // ---- Shared helpers ----
+
+    function setStatus(connected) {
+      document.getElementById("status-dot").classList.toggle("connected", connected);
+      document.getElementById("status-text").textContent = connected ? "Connected" : "Disconnected";
+    }
+
+    function formatTime(ts) {
+      try { return new Date(ts).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
+      catch (e) { return ts; }
+    }
+
+    // Allow Ctrl+Enter to submit
+    document.getElementById("meal-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitQuery();
+    });
+
+    // ---- Init ----
+    loadQueries();
+    connectWebSocket();
+  </script>
+</body>
+</html>

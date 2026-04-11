@@ -207,6 +207,15 @@
 
     .msg.self .msg-time { color: #93c5fd; }
 
+    .msg-upvotes {
+      font-size: 0.7rem;
+      color: #fbbf24;
+      margin-top: 0.2rem;
+      display: none;
+    }
+
+    .msg-upvotes.visible { display: block; }
+
     .system-msg {
       text-align: center;
       font-size: 0.75rem;
@@ -249,6 +258,22 @@
 
     button:hover { background: #7dd3fc; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .surprise-btn {
+      padding: 0.65rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: #fbbf24;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .surprise-btn:hover { background: #f59e0b; }
+    .surprise-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .meta {
       padding: 0.5rem 1.25rem;
@@ -310,9 +335,41 @@
       from { opacity: 1; }
       to   { opacity: 0; transform: translateY(-10px); }
     }
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0 1.25rem;
+      z-index: 30;
+      font-size: 0.85rem;
+    }
+
+    .top-nav a {
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+
+    .top-nav a.active { color: #38bdf8; }
+    .top-nav a:not(.active) { color: #64748b; }
+    .top-nav a:hover { color: #7dd3fc; }
+
+    body { padding-top: 40px; }
   </style>
 </head>
 <body>
+
+  <nav class="top-nav">
+    <a href="/" class="active">Chat</a>
+    <a href="/calories">Calorie Counter</a>
+  </nav>
 
   <div class="toast-container" id="toast-container"></div>
 
@@ -358,6 +415,7 @@
     <div class="input-area">
       <input type="text" id="msg-input" placeholder="Type a message..." disabled>
       <button id="send-btn" onclick="sendMessage()" disabled>Send</button>
+      <button class="surprise-btn" id="surprise-btn" onclick="surpriseMe()" disabled>Surprise Me</button>
     </div>
 
     <div class="meta">Go + GraphQL + WebSocket Subscriptions</div>
@@ -368,6 +426,7 @@
     <div class="msg">
       <div class="msg-sender"></div>
       <div class="msg-text"></div>
+      <div class="msg-upvotes"></div>
       <div class="msg-time"></div>
     </div>
   </template>
@@ -498,6 +557,7 @@
       currentRoom = "";
       document.getElementById("msg-input").disabled = true;
       document.getElementById("send-btn").disabled = true;
+      document.getElementById("surprise-btn").disabled = true;
       setStatus(false);
       showRoomLobby();
     }
@@ -508,7 +568,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            query: "query($room: String!) { messages(room: $room) { id sender text timestamp } }",
+            query: "query($room: String!) { messages(room: $room) { id sender text timestamp upvotes } }",
             variables: { room: room }
           })
         });
@@ -543,6 +603,27 @@
       }
     }
 
+    async function surpriseMe() {
+      var input = document.getElementById("msg-input");
+      var text = input.value.trim();
+      if (!text) text = "Surprise me!";
+      input.value = "";
+      input.focus();
+
+      try {
+        await fetch(API_URL + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: "mutation($room: String!, $sender: String!, $text: String!) { surpriseMe(room: $room, sender: $sender, text: $text) { id } }",
+            variables: { room: currentRoom, sender: username, text: text }
+          })
+        });
+      } catch (err) {
+        appendSystemMessage("Failed to send surprise: " + err.message);
+      }
+    }
+
     document.getElementById("msg-input").addEventListener("keydown", function(e) {
       if (e.key === "Enter") sendMessage();
     });
@@ -564,11 +645,12 @@
         if (data.type === "connection_ack") {
           setStatus(true);
           document.getElementById("send-btn").disabled = false;
+          document.getElementById("surprise-btn").disabled = false;
           ws.send(JSON.stringify({
             id: "1",
             type: "subscribe",
             payload: {
-              query: "subscription($room: String!) { messageSent(room: $room) { id sender text timestamp } }",
+              query: "subscription($room: String!) { messageSent(room: $room) { id sender text timestamp upvotes } }",
               variables: { room: room }
             }
           }));
@@ -580,6 +662,14 @@
               variables: { room: room, sender: username }
             }
           }));
+          ws.send(JSON.stringify({
+            id: "3",
+            type: "subscribe",
+            payload: {
+              query: "subscription($room: String!) { surpriseUpvoteCompleted(room: $room) { id room sender text timestamp upvotes } }",
+              variables: { room: room }
+            }
+          }));
         }
 
         if (data.type === "next" && data.payload && data.payload.data) {
@@ -589,12 +679,16 @@
           if (data.payload.data.jobCompleted) {
             showToast(data.payload.data.jobCompleted);
           }
+          if (data.payload.data.surpriseUpvoteCompleted) {
+            updateMessageUpvotes(data.payload.data.surpriseUpvoteCompleted);
+          }
         }
       };
 
       ws.onclose = function() {
         setStatus(false);
         document.getElementById("send-btn").disabled = true;
+        document.getElementById("surprise-btn").disabled = true;
         // Only reconnect if we're still in a room
         if (currentRoom === room) {
           setTimeout(function() { connectWebSocket(room); }, 2000);
@@ -613,11 +707,27 @@
       var div = clone.querySelector(".msg");
       var isSelf = (msg.sender === username);
       div.classList.add(isSelf ? "self" : "other");
+      div.dataset.msgId = msg.id;
       clone.querySelector(".msg-sender").textContent = isSelf ? "You" : msg.sender;
       clone.querySelector(".msg-text").textContent = msg.text;
+
+      var upvotesEl = clone.querySelector(".msg-upvotes");
+      if (msg.upvotes && msg.upvotes > 0) {
+        upvotesEl.textContent = "\u2B50 " + msg.upvotes + " upvotes";
+        upvotesEl.classList.add("visible");
+      }
+
       clone.querySelector(".msg-time").textContent = formatTime(msg.timestamp);
       container.appendChild(clone);
       container.scrollTop = container.scrollHeight;
+    }
+
+    function updateMessageUpvotes(msg) {
+      var el = document.querySelector('.msg[data-msg-id="' + msg.id + '"]');
+      if (!el) return;
+      var upvotesEl = el.querySelector(".msg-upvotes");
+      upvotesEl.textContent = "\u2B50 " + msg.upvotes + " upvotes";
+      upvotesEl.classList.add("visible");
     }
 
     function appendSystemMessage(text) {
