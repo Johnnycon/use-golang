@@ -42,6 +42,17 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("GET /calories", func(w http.ResponseWriter, r *http.Request) {
+		data := map[string]string{
+			"APIURL": apiURL,
+			"WSURL":  wsURL,
+		}
+		if err := tmpl.ExecuteTemplate(w, "calories.html", data); err != nil {
+			log.Printf("Template error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	})
+
 	log.Println("Web server starting on :3080")
 	if err := http.ListenAndServe(":3080", mux); err != nil {
 		log.Fatal(err)

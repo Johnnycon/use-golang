@@ -16,6 +16,8 @@ services:
       - ./api:/app
     environment:
       - DATABASE_URL=postgres://chat:chat@postgres:5432/chat?sslmode=disable
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
 
   web:
     build:

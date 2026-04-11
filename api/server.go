@@ -19,6 +19,7 @@ import (
 	"github.com/gotesting/api/db"
 	"github.com/gotesting/api/graph"
 	"github.com/gotesting/api/jobs"
+	"github.com/gotesting/api/llm"
 )
 
 func main() {
@@ -47,6 +48,10 @@ func main() {
 
 	resolver := graph.NewResolver(database)
 
+	// ---- LLM client ----
+
+	llmClient := llm.NewClient(os.Getenv("OPENAI_API_KEY"), os.Getenv("GOOGLE_API_KEY"))
+
 	// ---- River (job queue) ----
 
 	// Run River's own migrations (creates river_job, river_leader, etc.).
@@ -56,18 +61,31 @@ func main() {
 	}
 	log.Println("River migrations complete")
 
-	// Create the worker and wire its DB + completion callback.
+	// Create the workers and wire their DB + completion callbacks.
 	worker := &jobs.ProcessMessageWorker{
 		DB:         database,
 		OnComplete: resolver.HandleJobComplete,
 	}
+	surpriseWorker := &jobs.SurpriseUpvoteWorker{
+		DB:         database,
+		OnComplete: resolver.HandleSurpriseComplete,
+	}
+	calorieWorker := &jobs.EstimateCaloriesWorker{
+		DB:         database,
+		CallLLM:    llmClient.Call,
+		OnComplete: resolver.HandleCalorieComplete,
+	}
 
 	workers := river.NewWorkers()
 	river.AddWorker(workers, worker)
+	river.AddWorker(workers, surpriseWorker)
+	river.AddWorker(workers, calorieWorker)
 
 	riverClient, err := river.NewClient(riverpgxv5.New(database.Pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
-			river.QueueDefault: {MaxWorkers: 10},
+			"messages":  {MaxWorkers: 5},
+			"surprises": {MaxWorkers: 5},
+			"ai":        {MaxWorkers: 3},
 		},
 		Workers: workers,
 	})
@@ -80,10 +98,22 @@ func main() {
 	}
 	log.Println("River job queue started")
 
-	// Wire the job insertion function into the resolver.
+	// Wire the job insertion functions into the resolver.
 	resolver.InsertJob = func(messageID string) error {
 		_, err := riverClient.Insert(ctx, jobs.ProcessMessageArgs{
 			MessageID: messageID,
+		}, nil)
+		return err
+	}
+	resolver.InsertSurpriseJob = func(messageID string) error {
+		_, err := riverClient.Insert(ctx, jobs.SurpriseUpvoteArgs{
+			MessageID: messageID,
+		}, nil)
+		return err
+	}
+	resolver.InsertCalorieJob = func(queryID string) error {
+		_, err := riverClient.Insert(ctx, jobs.EstimateCaloriesArgs{
+			QueryID: queryID,
 		}, nil)
 		return err
 	}

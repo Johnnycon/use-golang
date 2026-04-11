@@ -9,6 +9,7 @@ type Message {
   sender: String!
   text: String!
   timestamp: String!
+  upvotes: Int!
 }
 
 type JobResult {
@@ -19,12 +20,27 @@ type JobResult {
   timestamp: String!
 }
 
+type CalorieQuery {
+  id: ID!
+  mealText: String!
+  model: String!
+  calories: Int
+  responseTimeMs: Int
+  totalTokens: Int
+  status: String!
+  errorMessage: String
+  createdAt: String!
+}
+
 type Query {
   """List all chat rooms."""
   rooms: [Room!]!
 
   """Fetch messages for a specific room."""
   messages(room: String!): [Message!]!
+
+  """List all calorie queries, newest first."""
+  calorieQueries: [CalorieQuery!]!
 }
 
 type Mutation {
@@ -33,6 +49,12 @@ type Mutation {
 
   """Send a message to a room."""
   sendMessage(room: String!, sender: String!, text: String!): Message!
+
+  """Send a message and enqueue a surprise upvote job."""
+  surpriseMe(room: String!, sender: String!, text: String!): Message!
+
+  """Submit a meal for calorie estimation via LLM."""
+  submitCalorieQuery(mealText: String!, modelName: String!): CalorieQuery!
 }
 
 type Subscription {
@@ -41,4 +63,10 @@ type Subscription {
 
   """Notifies when an async job finishes processing a message (scoped to sender)."""
   jobCompleted(room: String!, sender: String!): JobResult!
+
+  """Notifies all clients in a room when a surprise upvote is assigned."""
+  surpriseUpvoteCompleted(room: String!): Message!
+
+  """Notifies when a calorie estimation completes."""
+  calorieQueryCompleted: CalorieQuery!
 }

@@ -25,3 +25,6 @@ models:
   JobResult:
     model:
       - github.com/gotesting/api/graph/model.JobResult
+  CalorieQuery:
+    model:
+      - github.com/gotesting/api/graph/model.CalorieQuery

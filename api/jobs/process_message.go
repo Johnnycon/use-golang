@@ -19,6 +19,10 @@ type ProcessMessageArgs struct {
 
 func (ProcessMessageArgs) Kind() string { return "process_message" }
 
+func (ProcessMessageArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: "messages"}
+}
+
 // ProcessMessageWorker simulates async message processing.
 // In a real app this might call an LLM, run moderation, etc.
 type ProcessMessageWorker struct {

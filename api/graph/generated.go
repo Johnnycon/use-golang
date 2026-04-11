@@ -49,6 +49,18 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CalorieQuery struct {
+		Calories       func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		ErrorMessage   func(childComplexity int) int
+		ID             func(childComplexity int) int
+		MealText       func(childComplexity int) int
+		Model          func(childComplexity int) int
+		ResponseTimeMs func(childComplexity int) int
+		Status         func(childComplexity int) int
+		TotalTokens    func(childComplexity int) int
+	}
+
 	JobResult struct {
 		MessageID func(childComplexity int) int
 		Result    func(childComplexity int) int
@@ -63,16 +75,20 @@ type ComplexityRoot struct {
 		Sender    func(childComplexity int) int
 		Text      func(childComplexity int) int
 		Timestamp func(childComplexity int) int
+		Upvotes   func(childComplexity int) int
 	}
 
 	Mutation struct {
-		CreateRoom  func(childComplexity int, name string) int
-		SendMessage func(childComplexity int, room string, sender string, text string) int
+		CreateRoom         func(childComplexity int, name string) int
+		SendMessage        func(childComplexity int, room string, sender string, text string) int
+		SubmitCalorieQuery func(childComplexity int, mealText string, modelName string) int
+		SurpriseMe         func(childComplexity int, room string, sender string, text string) int
 	}
 
 	Query struct {
-		Messages func(childComplexity int, room string) int
-		Rooms    func(childComplexity int) int
+		CalorieQueries func(childComplexity int) int
+		Messages       func(childComplexity int, room string) int
+		Rooms          func(childComplexity int) int
 	}
 
 	Room struct {
@@ -81,22 +97,29 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		JobCompleted func(childComplexity int, room string, sender string) int
-		MessageSent  func(childComplexity int, room string) int
+		CalorieQueryCompleted   func(childComplexity int) int
+		JobCompleted            func(childComplexity int, room string, sender string) int
+		MessageSent             func(childComplexity int, room string) int
+		SurpriseUpvoteCompleted func(childComplexity int, room string) int
 	}
 }
 
 type MutationResolver interface {
 	CreateRoom(ctx context.Context, name string) (*model.Room, error)
 	SendMessage(ctx context.Context, room string, sender string, text string) (*model.Message, error)
+	SurpriseMe(ctx context.Context, room string, sender string, text string) (*model.Message, error)
+	SubmitCalorieQuery(ctx context.Context, mealText string, modelName string) (*model.CalorieQuery, error)
 }
 type QueryResolver interface {
 	Rooms(ctx context.Context) ([]*model.Room, error)
 	Messages(ctx context.Context, room string) ([]*model.Message, error)
+	CalorieQueries(ctx context.Context) ([]*model.CalorieQuery, error)
 }
 type SubscriptionResolver interface {
 	MessageSent(ctx context.Context, room string) (<-chan *model.Message, error)
 	JobCompleted(ctx context.Context, room string, sender string) (<-chan *model.JobResult, error)
+	SurpriseUpvoteCompleted(ctx context.Context, room string) (<-chan *model.Message, error)
+	CalorieQueryCompleted(ctx context.Context) (<-chan *model.CalorieQuery, error)
 }
 
 type executableSchema struct {
@@ -117,6 +140,69 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CalorieQuery.calories":
+		if e.complexity.CalorieQuery.Calories == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.Calories(childComplexity), true
+
+	case "CalorieQuery.createdAt":
+		if e.complexity.CalorieQuery.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.CreatedAt(childComplexity), true
+
+	case "CalorieQuery.errorMessage":
+		if e.complexity.CalorieQuery.ErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.ErrorMessage(childComplexity), true
+
+	case "CalorieQuery.id":
+		if e.complexity.CalorieQuery.ID == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.ID(childComplexity), true
+
+	case "CalorieQuery.mealText":
+		if e.complexity.CalorieQuery.MealText == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.MealText(childComplexity), true
+
+	case "CalorieQuery.model":
+		if e.complexity.CalorieQuery.Model == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.Model(childComplexity), true
+
+	case "CalorieQuery.responseTimeMs":
+		if e.complexity.CalorieQuery.ResponseTimeMs == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.ResponseTimeMs(childComplexity), true
+
+	case "CalorieQuery.status":
+		if e.complexity.CalorieQuery.Status == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.Status(childComplexity), true
+
+	case "CalorieQuery.totalTokens":
+		if e.complexity.CalorieQuery.TotalTokens == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.TotalTokens(childComplexity), true
 
 	case "JobResult.messageId":
 		if e.complexity.JobResult.MessageID == nil {
@@ -188,6 +274,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Message.Timestamp(childComplexity), true
 
+	case "Message.upvotes":
+		if e.complexity.Message.Upvotes == nil {
+			break
+		}
+
+		return e.complexity.Message.Upvotes(childComplexity), true
+
 	case "Mutation.createRoom":
 		if e.complexity.Mutation.CreateRoom == nil {
 			break
@@ -211,6 +304,37 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SendMessage(childComplexity, args["room"].(string), args["sender"].(string), args["text"].(string)), true
+
+	case "Mutation.submitCalorieQuery":
+		if e.complexity.Mutation.SubmitCalorieQuery == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_submitCalorieQuery_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubmitCalorieQuery(childComplexity, args["mealText"].(string), args["modelName"].(string)), true
+
+	case "Mutation.surpriseMe":
+		if e.complexity.Mutation.SurpriseMe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_surpriseMe_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SurpriseMe(childComplexity, args["room"].(string), args["sender"].(string), args["text"].(string)), true
+
+	case "Query.calorieQueries":
+		if e.complexity.Query.CalorieQueries == nil {
+			break
+		}
+
+		return e.complexity.Query.CalorieQueries(childComplexity), true
 
 	case "Query.messages":
 		if e.complexity.Query.Messages == nil {
@@ -245,6 +369,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.Name(childComplexity), true
 
+	case "Subscription.calorieQueryCompleted":
+		if e.complexity.Subscription.CalorieQueryCompleted == nil {
+			break
+		}
+
+		return e.complexity.Subscription.CalorieQueryCompleted(childComplexity), true
+
 	case "Subscription.jobCompleted":
 		if e.complexity.Subscription.JobCompleted == nil {
 			break
@@ -268,6 +399,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.MessageSent(childComplexity, args["room"].(string)), true
+
+	case "Subscription.surpriseUpvoteCompleted":
+		if e.complexity.Subscription.SurpriseUpvoteCompleted == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_surpriseUpvoteCompleted_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.SurpriseUpvoteCompleted(childComplexity, args["room"].(string)), true
 
 	}
 	return 0, false
@@ -457,6 +600,63 @@ func (ec *executionContext) field_Mutation_sendMessage_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_submitCalorieQuery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["mealText"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mealText"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["mealText"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["modelName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["modelName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_surpriseMe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["room"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("room"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["room"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["sender"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sender"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sender"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["text"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["text"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -526,6 +726,21 @@ func (ec *executionContext) field_Subscription_messageSent_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Subscription_surpriseUpvoteCompleted_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["room"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("room"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["room"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -563,6 +778,390 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _CalorieQuery_id(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_mealText(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_mealText(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MealText, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_mealText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_model(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_model(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Model, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_calories(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_calories(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Calories, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_calories(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_responseTimeMs(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_responseTimeMs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResponseTimeMs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_responseTimeMs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_totalTokens(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_totalTokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_totalTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_status(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_errorMessage(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_errorMessage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ErrorMessage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_errorMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _JobResult_messageId(ctx context.Context, field graphql.CollectedField, obj *model.JobResult) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_JobResult_messageId(ctx, field)
@@ -1004,6 +1603,50 @@ func (ec *executionContext) fieldContext_Message_timestamp(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Message_upvotes(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Message_upvotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Upvotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Message_upvotes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Message",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createRoom(ctx, field)
 	if err != nil {
@@ -1114,6 +1757,8 @@ func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Contex
 				return ec.fieldContext_Message_text(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_Message_timestamp(ctx, field)
+			case "upvotes":
+				return ec.fieldContext_Message_upvotes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
 		},
@@ -1126,6 +1771,150 @@ func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_sendMessage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_surpriseMe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_surpriseMe(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SurpriseMe(rctx, fc.Args["room"].(string), fc.Args["sender"].(string), fc.Args["text"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Message)
+	fc.Result = res
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_surpriseMe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Message_id(ctx, field)
+			case "room":
+				return ec.fieldContext_Message_room(ctx, field)
+			case "sender":
+				return ec.fieldContext_Message_sender(ctx, field)
+			case "text":
+				return ec.fieldContext_Message_text(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_Message_timestamp(ctx, field)
+			case "upvotes":
+				return ec.fieldContext_Message_upvotes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_surpriseMe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_submitCalorieQuery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_submitCalorieQuery(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SubmitCalorieQuery(rctx, fc.Args["mealText"].(string), fc.Args["modelName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CalorieQuery)
+	fc.Result = res
+	return ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_submitCalorieQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CalorieQuery_id(ctx, field)
+			case "mealText":
+				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
+			case "model":
+				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "calories":
+				return ec.fieldContext_CalorieQuery_calories(ctx, field)
+			case "responseTimeMs":
+				return ec.fieldContext_CalorieQuery_responseTimeMs(ctx, field)
+			case "totalTokens":
+				return ec.fieldContext_CalorieQuery_totalTokens(ctx, field)
+			case "status":
+				return ec.fieldContext_CalorieQuery_status(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_CalorieQuery_errorMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CalorieQuery_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CalorieQuery", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_submitCalorieQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1231,6 +2020,8 @@ func (ec *executionContext) fieldContext_Query_messages(ctx context.Context, fie
 				return ec.fieldContext_Message_text(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_Message_timestamp(ctx, field)
+			case "upvotes":
+				return ec.fieldContext_Message_upvotes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
 		},
@@ -1245,6 +2036,70 @@ func (ec *executionContext) fieldContext_Query_messages(ctx context.Context, fie
 	if fc.Args, err = ec.field_Query_messages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_calorieQueries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_calorieQueries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CalorieQueries(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CalorieQuery)
+	fc.Result = res
+	return ec.marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_calorieQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CalorieQuery_id(ctx, field)
+			case "mealText":
+				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
+			case "model":
+				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "calories":
+				return ec.fieldContext_CalorieQuery_calories(ctx, field)
+			case "responseTimeMs":
+				return ec.fieldContext_CalorieQuery_responseTimeMs(ctx, field)
+			case "totalTokens":
+				return ec.fieldContext_CalorieQuery_totalTokens(ctx, field)
+			case "status":
+				return ec.fieldContext_CalorieQuery_status(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_CalorieQuery_errorMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CalorieQuery_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CalorieQuery", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -1529,6 +2384,8 @@ func (ec *executionContext) fieldContext_Subscription_messageSent(ctx context.Co
 				return ec.fieldContext_Message_text(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_Message_timestamp(ctx, field)
+			case "upvotes":
+				return ec.fieldContext_Message_upvotes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
 		},
@@ -1624,6 +2481,167 @@ func (ec *executionContext) fieldContext_Subscription_jobCompleted(ctx context.C
 	if fc.Args, err = ec.field_Subscription_jobCompleted_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_surpriseUpvoteCompleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_surpriseUpvoteCompleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().SurpriseUpvoteCompleted(rctx, fc.Args["room"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.Message):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_surpriseUpvoteCompleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Message_id(ctx, field)
+			case "room":
+				return ec.fieldContext_Message_room(ctx, field)
+			case "sender":
+				return ec.fieldContext_Message_sender(ctx, field)
+			case "text":
+				return ec.fieldContext_Message_text(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_Message_timestamp(ctx, field)
+			case "upvotes":
+				return ec.fieldContext_Message_upvotes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_surpriseUpvoteCompleted_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_calorieQueryCompleted(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_calorieQueryCompleted(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().CalorieQueryCompleted(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.CalorieQuery):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_calorieQueryCompleted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CalorieQuery_id(ctx, field)
+			case "mealText":
+				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
+			case "model":
+				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "calories":
+				return ec.fieldContext_CalorieQuery_calories(ctx, field)
+			case "responseTimeMs":
+				return ec.fieldContext_CalorieQuery_responseTimeMs(ctx, field)
+			case "totalTokens":
+				return ec.fieldContext_CalorieQuery_totalTokens(ctx, field)
+			case "status":
+				return ec.fieldContext_CalorieQuery_status(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_CalorieQuery_errorMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CalorieQuery_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CalorieQuery", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -3409,6 +4427,73 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** object.gotpl ****************************
 
+var calorieQueryImplementors = []string{"CalorieQuery"}
+
+func (ec *executionContext) _CalorieQuery(ctx context.Context, sel ast.SelectionSet, obj *model.CalorieQuery) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, calorieQueryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CalorieQuery")
+		case "id":
+			out.Values[i] = ec._CalorieQuery_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mealText":
+			out.Values[i] = ec._CalorieQuery_mealText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "model":
+			out.Values[i] = ec._CalorieQuery_model(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "calories":
+			out.Values[i] = ec._CalorieQuery_calories(ctx, field, obj)
+		case "responseTimeMs":
+			out.Values[i] = ec._CalorieQuery_responseTimeMs(ctx, field, obj)
+		case "totalTokens":
+			out.Values[i] = ec._CalorieQuery_totalTokens(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._CalorieQuery_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errorMessage":
+			out.Values[i] = ec._CalorieQuery_errorMessage(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._CalorieQuery_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var jobResultImplementors = []string{"JobResult"}
 
 func (ec *executionContext) _JobResult(ctx context.Context, sel ast.SelectionSet, obj *model.JobResult) graphql.Marshaler {
@@ -3504,6 +4589,11 @@ func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "upvotes":
+			out.Values[i] = ec._Message_upvotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3556,6 +4646,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "sendMessage":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_sendMessage(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "surpriseMe":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_surpriseMe(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "submitCalorieQuery":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_submitCalorieQuery(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3634,6 +4738,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_messages(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "calorieQueries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_calorieQueries(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -3738,6 +4864,10 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 		return ec._Subscription_messageSent(ctx, fields[0])
 	case "jobCompleted":
 		return ec._Subscription_jobCompleted(ctx, fields[0])
+	case "surpriseUpvoteCompleted":
+		return ec._Subscription_surpriseUpvoteCompleted(ctx, fields[0])
+	case "calorieQueryCompleted":
+		return ec._Subscription_calorieQueryCompleted(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -4082,6 +5212,64 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNCalorieQuery2githubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v model.CalorieQuery) graphql.Marshaler {
+	return ec._CalorieQuery(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CalorieQuery) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v *model.CalorieQuery) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CalorieQuery(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -4535,6 +5723,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 
