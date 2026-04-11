@@ -1,0 +1,22 @@
+# Air configuration — watches for file changes and recompiles.
+# Docs: https://github.com/air-verse/air
+
+root = "."
+
+[build]
+  # Build command
+  cmd = "go build -o ./tmp/api ."
+  # Binary to run
+  bin = "./tmp/api"
+  # Watch these extensions
+  include_ext = ["go", "graphqls", "sql"]
+  # Ignore these directories
+  exclude_dir = ["tmp"]
+  # Delay before rebuilding (milliseconds)
+  delay = 500
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = true

@@ -1,0 +1,27 @@
+# Development overrides — hot reload via Air.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This overrides the api and web services to:
+#   - Use the full Go image (needs compiler for live recompilation)
+#   - Mount source code from your Mac into the container
+#   - Run Air instead of the compiled binary
+#   - Skip the multi-stage Dockerfile entirely
+
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./api:/app
+    environment:
+      - DATABASE_URL=postgres://chat:chat@postgres:5432/chat?sslmode=disable
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./web:/app
+    environment:
+      - API_URL=http://localhost:8888/api

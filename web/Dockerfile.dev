@@ -1,0 +1,10 @@
+# Development Dockerfile — hot reload with Air.
+FROM golang:1.23-alpine
+
+RUN go install github.com/air-verse/air@v1.61.7
+
+WORKDIR /app
+
+EXPOSE 3080
+
+CMD sh -c "go mod tidy && air"

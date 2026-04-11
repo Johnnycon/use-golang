@@ -1,0 +1,17 @@
+# Development Dockerfile — hot reload with Air.
+# NOT for production. Uses the full Go image so Air can recompile on the fly.
+FROM golang:1.23-alpine
+
+RUN apk add --no-cache git
+
+# Install Air (file watcher + auto-recompiler)
+RUN go install github.com/air-verse/air@v1.61.7
+
+WORKDIR /app
+
+EXPOSE 8080
+
+# On startup: install deps, generate GraphQL code, then start Air.
+# This runs every time the container starts because the volume mount
+# replaces /app with your host source code.
+CMD sh -c "go mod tidy && go run github.com/99designs/gqlgen generate && air"
