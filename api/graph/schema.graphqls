@@ -1,0 +1,44 @@
+type Room {
+  id: ID!
+  name: String!
+}
+
+type Message {
+  id: ID!
+  room: String!
+  sender: String!
+  text: String!
+  timestamp: String!
+}
+
+type JobResult {
+  messageId: ID!
+  room: String!
+  sender: String!
+  result: Int!
+  timestamp: String!
+}
+
+type Query {
+  """List all chat rooms."""
+  rooms: [Room!]!
+
+  """Fetch messages for a specific room."""
+  messages(room: String!): [Message!]!
+}
+
+type Mutation {
+  """Create a new chat room."""
+  createRoom(name: String!): Room!
+
+  """Send a message to a room."""
+  sendMessage(room: String!, sender: String!, text: String!): Message!
+}
+
+type Subscription {
+  """Real-time new messages in a room."""
+  messageSent(room: String!): Message!
+
+  """Notifies when an async job finishes processing a message (scoped to sender)."""
+  jobCompleted(room: String!, sender: String!): JobResult!
+}

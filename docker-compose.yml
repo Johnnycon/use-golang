@@ -1,0 +1,78 @@
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.constraints=Label(`traefik.project`,`gotesting`)"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"                    # dashboard on :8080
+    ports:
+      - "8888:80"
+      - "8089:8080"                              # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chat
+      POSTGRES_PASSWORD: chat
+      POSTGRES_DB: chat
+    ports:
+      - "5433:5432"   # direct access for psql/TablePlus — not proxied by Traefik
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chat"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.project=gotesting"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
+      - "traefik.http.routers.api.middlewares=api-strip"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+    environment:
+      - DATABASE_URL=postgres://chat:chat@postgres:5432/chat?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  riverui:
+    image: ghcr.io/riverqueue/riverui:0.3.1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.project=gotesting"
+      - "traefik.http.routers.riverui.rule=Host(`riverui.localhost`)"
+      - "traefik.http.routers.riverui.entrypoints=web"
+      - "traefik.http.services.riverui.loadbalancer.server.port=8080"
+    environment:
+      - DATABASE_URL=postgres://chat:chat@postgres:5432/chat?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.project=gotesting"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.services.web.loadbalancer.server.port=3080"
+    environment:
+      - API_URL=http://localhost:8888/api
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

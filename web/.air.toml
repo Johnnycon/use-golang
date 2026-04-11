@@ -1,0 +1,14 @@
+root = "."
+
+[build]
+  cmd = "go build -o ./tmp/web ."
+  bin = "./tmp/web"
+  include_ext = ["go", "html"]
+  exclude_dir = ["tmp"]
+  delay = 500
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = true
