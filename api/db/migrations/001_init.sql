@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS calorie_queries (
     id               TEXT PRIMARY KEY,
     meal_text        TEXT NOT NULL,
     model            TEXT NOT NULL,
+    reasoning_effort TEXT,
     calories         INTEGER,
     response_time_ms INTEGER,
     total_tokens     INTEGER,
@@ -28,3 +29,6 @@ CREATE TABLE IF NOT EXISTS calorie_queries (
     error_message    TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- For existing databases where CREATE TABLE already ran without the reasoning_effort column.
+ALTER TABLE calorie_queries ADD COLUMN IF NOT EXISTS reasoning_effort TEXT;

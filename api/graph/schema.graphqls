@@ -24,6 +24,7 @@ type CalorieQuery {
   id: ID!
   mealText: String!
   model: String!
+  reasoningEffort: String
   calories: Int
   responseTimeMs: Int
   totalTokens: Int
@@ -54,7 +55,13 @@ type Mutation {
   surpriseMe(room: String!, sender: String!, text: String!): Message!
 
   """Submit a meal for calorie estimation via LLM."""
-  submitCalorieQuery(mealText: String!, modelName: String!): CalorieQuery!
+  submitCalorieQuery(mealText: String!, modelName: String!, reasoningEffort: String): CalorieQuery!
+
+  """Delete all calorie queries."""
+  clearCalorieQueries: Boolean!
+
+  """Delete a single calorie query by ID."""
+  deleteCalorieQuery(id: ID!): Boolean!
 }
 
 type Subscription {

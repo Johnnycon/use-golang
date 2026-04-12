@@ -7,6 +7,7 @@ import (
 
 	openai "github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/shared"
 	"google.golang.org/genai"
 )
 
@@ -34,9 +35,9 @@ func NewClient(openAIKey, googleKey string) *Client {
 	return &Client{OpenAIKey: openAIKey, GoogleKey: googleKey}
 }
 
-func (c *Client) Call(ctx context.Context, model string, prompt string) (*Result, error) {
+func (c *Client) Call(ctx context.Context, model string, prompt string, reasoningEffort string) (*Result, error) {
 	if openAIModels[model] {
-		return c.callOpenAI(ctx, model, prompt)
+		return c.callOpenAI(ctx, model, prompt, reasoningEffort)
 	}
 	if geminiModels[model] {
 		return c.callGemini(ctx, model, prompt)
@@ -44,15 +45,21 @@ func (c *Client) Call(ctx context.Context, model string, prompt string) (*Result
 	return nil, fmt.Errorf("unsupported model: %s", model)
 }
 
-func (c *Client) callOpenAI(ctx context.Context, model string, prompt string) (*Result, error) {
+func (c *Client) callOpenAI(ctx context.Context, model string, prompt string, reasoningEffort string) (*Result, error) {
 	client := openai.NewClient(option.WithAPIKey(c.OpenAIKey))
 
-	resp, err := client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	params := openai.ChatCompletionNewParams{
 		Model: model,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		},
-	})
+	}
+
+	if reasoningEffort != "" {
+		params.ReasoningEffort = shared.ReasoningEffort(reasoningEffort)
+	}
+
+	resp, err := client.Chat.Completions.New(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("openai error: %w", err)
 	}

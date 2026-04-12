@@ -15,15 +15,16 @@ type Message struct {
 }
 
 type CalorieQuery struct {
-	ID             string  `json:"id"`
-	MealText       string  `json:"mealText"`
-	Model          string  `json:"model"`
-	Calories       *int    `json:"calories"`
-	ResponseTimeMs *int    `json:"responseTimeMs"`
-	TotalTokens    *int    `json:"totalTokens"`
-	Status         string  `json:"status"`
-	ErrorMessage   *string `json:"errorMessage"`
-	CreatedAt      string  `json:"createdAt"`
+	ID              string  `json:"id"`
+	MealText        string  `json:"mealText"`
+	Model           string  `json:"model"`
+	ReasoningEffort *string `json:"reasoningEffort"`
+	Calories        *int    `json:"calories"`
+	ResponseTimeMs  *int    `json:"responseTimeMs"`
+	TotalTokens     *int    `json:"totalTokens"`
+	Status          string  `json:"status"`
+	ErrorMessage    *string `json:"errorMessage"`
+	CreatedAt       string  `json:"createdAt"`
 }
 
 type JobResult struct {

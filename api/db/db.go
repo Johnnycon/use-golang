@@ -137,8 +137,8 @@ func (d *DB) UpdateMessageUpvotes(ctx context.Context, id string, upvotes int) e
 
 func (d *DB) SaveCalorieQuery(ctx context.Context, q *model.CalorieQuery) error {
 	_, err := d.Pool.Exec(ctx,
-		"INSERT INTO calorie_queries (id, meal_text, model, status, created_at) VALUES ($1, $2, $3, $4, $5)",
-		q.ID, q.MealText, q.Model, q.Status, q.CreatedAt,
+		"INSERT INTO calorie_queries (id, meal_text, model, reasoning_effort, status, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+		q.ID, q.MealText, q.Model, q.ReasoningEffort, q.Status, q.CreatedAt,
 	)
 	return err
 }
@@ -147,8 +147,8 @@ func (d *DB) GetCalorieQuery(ctx context.Context, id string) (*model.CalorieQuer
 	q := &model.CalorieQuery{}
 	var createdAt time.Time
 	err := d.Pool.QueryRow(ctx,
-		"SELECT id, meal_text, model, calories, response_time_ms, total_tokens, status, error_message, created_at FROM calorie_queries WHERE id = $1", id,
-	).Scan(&q.ID, &q.MealText, &q.Model, &q.Calories, &q.ResponseTimeMs, &q.TotalTokens, &q.Status, &q.ErrorMessage, &createdAt)
+		"SELECT id, meal_text, model, reasoning_effort, calories, response_time_ms, total_tokens, status, error_message, created_at FROM calorie_queries WHERE id = $1", id,
+	).Scan(&q.ID, &q.MealText, &q.Model, &q.ReasoningEffort, &q.Calories, &q.ResponseTimeMs, &q.TotalTokens, &q.Status, &q.ErrorMessage, &createdAt)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (d *DB) GetCalorieQuery(ctx context.Context, id string) (*model.CalorieQuer
 
 func (d *DB) GetCalorieQueries(ctx context.Context) ([]*model.CalorieQuery, error) {
 	rows, err := d.Pool.Query(ctx,
-		"SELECT id, meal_text, model, calories, response_time_ms, total_tokens, status, error_message, created_at FROM calorie_queries ORDER BY created_at DESC",
+		"SELECT id, meal_text, model, reasoning_effort, calories, response_time_ms, total_tokens, status, error_message, created_at FROM calorie_queries ORDER BY created_at DESC",
 	)
 	if err != nil {
 		return nil, err
@@ -169,13 +169,23 @@ func (d *DB) GetCalorieQueries(ctx context.Context) ([]*model.CalorieQuery, erro
 	for rows.Next() {
 		q := &model.CalorieQuery{}
 		var createdAt time.Time
-		if err := rows.Scan(&q.ID, &q.MealText, &q.Model, &q.Calories, &q.ResponseTimeMs, &q.TotalTokens, &q.Status, &q.ErrorMessage, &createdAt); err != nil {
+		if err := rows.Scan(&q.ID, &q.MealText, &q.Model, &q.ReasoningEffort, &q.Calories, &q.ResponseTimeMs, &q.TotalTokens, &q.Status, &q.ErrorMessage, &createdAt); err != nil {
 			return nil, err
 		}
 		q.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		queries = append(queries, q)
 	}
 	return queries, rows.Err()
+}
+
+func (d *DB) DeleteAllCalorieQueries(ctx context.Context) error {
+	_, err := d.Pool.Exec(ctx, "DELETE FROM calorie_queries")
+	return err
+}
+
+func (d *DB) DeleteCalorieQuery(ctx context.Context, id string) error {
+	_, err := d.Pool.Exec(ctx, "DELETE FROM calorie_queries WHERE id = $1", id)
+	return err
 }
 
 func (d *DB) UpdateCalorieQuery(ctx context.Context, id string, calories *int, responseTimeMs *int, totalTokens *int, status string, errorMessage *string) error {

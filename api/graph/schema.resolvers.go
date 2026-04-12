@@ -103,18 +103,19 @@ func (r *mutationResolver) SurpriseMe(ctx context.Context, room string, sender s
 }
 
 // SubmitCalorieQuery is the resolver for the submitCalorieQuery field.
-func (r *mutationResolver) SubmitCalorieQuery(ctx context.Context, mealText string, modelName string) (*model.CalorieQuery, error) {
+func (r *mutationResolver) SubmitCalorieQuery(ctx context.Context, mealText string, modelName string, reasoningEffort *string) (*model.CalorieQuery, error) {
 	mealText = strings.TrimSpace(mealText)
 	if mealText == "" {
 		return nil, fmt.Errorf("meal text cannot be empty")
 	}
 
 	q := &model.CalorieQuery{
-		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
-		MealText:  mealText,
-		Model:     modelName,
-		Status:    "pending",
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		ID:              fmt.Sprintf("%d", time.Now().UnixNano()),
+		MealText:        mealText,
+		Model:           modelName,
+		ReasoningEffort: reasoningEffort,
+		Status:          "pending",
+		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
 
 	if err := r.DB.SaveCalorieQuery(ctx, q); err != nil {
@@ -128,6 +129,22 @@ func (r *mutationResolver) SubmitCalorieQuery(ctx context.Context, mealText stri
 	}
 
 	return q, nil
+}
+
+// ClearCalorieQueries is the resolver for the clearCalorieQueries field.
+func (r *mutationResolver) ClearCalorieQueries(ctx context.Context) (bool, error) {
+	if err := r.DB.DeleteAllCalorieQueries(ctx); err != nil {
+		return false, fmt.Errorf("failed to clear calorie queries: %w", err)
+	}
+	return true, nil
+}
+
+// DeleteCalorieQuery is the resolver for the deleteCalorieQuery field.
+func (r *mutationResolver) DeleteCalorieQuery(ctx context.Context, id string) (bool, error) {
+	if err := r.DB.DeleteCalorieQuery(ctx, id); err != nil {
+		return false, fmt.Errorf("failed to delete calorie query: %w", err)
+	}
+	return true, nil
 }
 
 // Rooms is the resolver for the rooms field.
