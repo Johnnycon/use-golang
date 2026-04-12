@@ -30,7 +30,7 @@ type EstimateCaloriesWorker struct {
 	river.WorkerDefaults[EstimateCaloriesArgs]
 
 	DB         *db.DB
-	CallLLM    func(ctx context.Context, model string, prompt string) (*llm.Result, error)
+	CallLLM    func(ctx context.Context, model string, prompt string, reasoningEffort string) (*llm.Result, error)
 	OnComplete func(result *model.CalorieQuery)
 }
 
@@ -45,8 +45,13 @@ func (w *EstimateCaloriesWorker) Work(ctx context.Context, job *river.Job[Estima
 		q.MealText,
 	)
 
+	var reasoningEffort string
+	if q.ReasoningEffort != nil {
+		reasoningEffort = *q.ReasoningEffort
+	}
+
 	start := time.Now()
-	result, err := w.CallLLM(ctx, q.Model, prompt)
+	result, err := w.CallLLM(ctx, q.Model, prompt, reasoningEffort)
 	elapsed := int(time.Since(start).Milliseconds())
 
 	if err != nil {

@@ -173,7 +173,25 @@
       padding: 1rem 1.25rem;
       margin-bottom: 0.75rem;
       transition: border-color 0.3s;
+      position: relative;
     }
+
+    .result-delete {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+    }
+
+    .result-item:hover .result-delete { opacity: 1; }
+    .result-delete:hover { color: #f87171; background: none; }
 
     .result-item.pending {
       border-color: #475569;
@@ -221,6 +239,7 @@
     }
 
     .badge-model { background: #312e81; color: #a5b4fc; }
+    .badge-effort { background: #3b1764; color: #c084fc; }
     .badge-time  { background: #1e3a5f; color: #7dd3fc; }
     .badge-tokens { background: #1a2e1a; color: #4ade80; }
     .badge-pending { background: #44403c; color: #fbbf24; }
@@ -319,7 +338,7 @@
           <textarea id="meal-input" placeholder="Describe your meal... e.g. Two eggs, toast with butter, and a glass of orange juice"></textarea>
         </div>
         <div class="form-row">
-          <select id="model-select">
+          <select id="model-select" onchange="toggleReasoningEffort()">
             <optgroup label="OpenAI">
               <option value="gpt-5.4-mini">GPT-5.4 Mini</option>
               <option value="gpt-5.4-nano">GPT-5.4 Nano</option>
@@ -332,6 +351,13 @@
               <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
             </optgroup>
           </select>
+          <select id="reasoning-effort-select" title="Reasoning effort (OpenAI only)">
+            <option value="none">None</option>
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="xhigh">XHigh</option>
+          </select>
           <button id="submit-btn" onclick="submitQuery()">Estimate Calories</button>
         </div>
       </div>
@@ -341,7 +367,13 @@
         <span id="status-text">Connecting...</span>
       </div>
 
-      <div class="results-header">Results</div>
+      <div class="results-header" style="display:flex;align-items:center;gap:0.5rem;">
+        Results
+        <select id="filter-model" onchange="applyFilter()" style="margin-left:auto;font-size:0.7rem;padding:0.25rem 0.5rem;min-width:auto;">
+          <option value="">All Models</option>
+        </select>
+        <button id="clear-btn" onclick="clearResults()" style="font-size:0.7rem;padding:0.3rem 0.7rem;background:#334155;color:#94a3b8;">Clear All</button>
+      </div>
       <div id="results-list">
         <div class="empty-state" id="empty-state">No queries yet — describe a meal above to get started</div>
       </div>
@@ -361,6 +393,42 @@
     var WS_URL  = "{{.WSURL}}";
     var ws = null;
     var allQueries = []; // keep all completed queries for stats
+    var seenModels = {};  // track models for filter dropdown
+
+    function rebuildFilterOptions() {
+      var sel = document.getElementById("filter-model");
+      var current = sel.value;
+      while (sel.options.length > 1) sel.remove(1);
+      var models = Object.keys(seenModels).sort();
+      models.forEach(function(m) {
+        var opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        sel.appendChild(opt);
+      });
+      sel.value = current;
+    }
+
+    function trackModel(model) {
+      if (!seenModels[model]) {
+        seenModels[model] = true;
+        rebuildFilterOptions();
+      }
+    }
+
+    function applyFilter() {
+      var filter = document.getElementById("filter-model").value;
+      var items = document.querySelectorAll(".result-item");
+      var visibleCount = 0;
+      items.forEach(function(el) {
+        var model = el.getAttribute("data-model");
+        var show = !filter || model === filter;
+        el.style.display = show ? "" : "none";
+        if (show) visibleCount++;
+      });
+      var empty = document.getElementById("empty-state");
+      if (empty) empty.style.display = visibleCount === 0 ? "" : "none";
+    }
 
     // ---- Load existing queries on page load ----
 
@@ -370,7 +438,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            query: "{ calorieQueries { id mealText model calories responseTimeMs totalTokens status errorMessage createdAt } }"
+            query: "{ calorieQueries { id mealText model reasoningEffort calories responseTimeMs totalTokens status errorMessage createdAt } }"
           })
         });
         var json = await res.json();
@@ -391,6 +459,39 @@
 
     // ---- Submit a calorie query ----
 
+    async function clearResults() {
+      if (!confirm("Clear all calorie query results?")) return;
+      try {
+        await fetch(API_URL + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: "mutation { clearCalorieQueries }"
+          })
+        });
+        var list = document.getElementById("results-list");
+        while (list.firstChild) list.removeChild(list.firstChild);
+        var empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.id = "empty-state";
+        empty.textContent = "No queries yet \u2014 describe a meal above to get started";
+        list.appendChild(empty);
+        allQueries = [];
+        seenModels = {};
+        rebuildFilterOptions();
+        document.getElementById("filter-model").value = "";
+        renderStats();
+      } catch (err) {
+        console.error("Failed to clear:", err);
+      }
+    }
+
+    function toggleReasoningEffort() {
+      var model = document.getElementById("model-select").value;
+      var effortSelect = document.getElementById("reasoning-effort-select");
+      effortSelect.style.display = openAIModelSet[model] ? "" : "none";
+    }
+
     async function submitQuery() {
       var input = document.getElementById("meal-input");
       var select = document.getElementById("model-select");
@@ -398,6 +499,11 @@
       if (!text) return;
 
       var model = select.value;
+      var reasoningEffort = null;
+      if (openAIModelSet[model]) {
+        var effort = document.getElementById("reasoning-effort-select").value;
+        if (effort) reasoningEffort = effort;
+      }
       input.value = "";
 
       document.getElementById("submit-btn").disabled = true;
@@ -407,8 +513,8 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            query: "mutation($mealText: String!, $modelName: String!) { submitCalorieQuery(mealText: $mealText, modelName: $modelName) { id mealText model status createdAt } }",
-            variables: { mealText: text, modelName: model }
+            query: "mutation($mealText: String!, $modelName: String!, $reasoningEffort: String) { submitCalorieQuery(mealText: $mealText, modelName: $modelName, reasoningEffort: $reasoningEffort) { id mealText model reasoningEffort status createdAt } }",
+            variables: { mealText: text, modelName: model, reasoningEffort: reasoningEffort }
           })
         });
         var json = await res.json();
@@ -446,7 +552,7 @@
             id: "1",
             type: "subscribe",
             payload: {
-              query: "subscription { calorieQueryCompleted { id mealText model calories responseTimeMs totalTokens status errorMessage createdAt } }"
+              query: "subscription { calorieQueryCompleted { id mealText model reasoningEffort calories responseTimeMs totalTokens status errorMessage createdAt } }"
             }
           }));
         }
@@ -485,6 +591,7 @@
 
       var item = createResultItem(q, true);
       list.insertBefore(item, list.firstChild);
+      applyFilter();
     }
 
     function updateResult(q) {
@@ -495,13 +602,44 @@
       } else {
         addResult(q);
       }
+      applyFilter();
+    }
+
+    async function deleteResult(id) {
+      try {
+        await fetch(API_URL + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: "mutation($id: ID!) { deleteCalorieQuery(id: $id) }",
+            variables: { id: id }
+          })
+        });
+        var el = document.getElementById("result-" + id);
+        if (el) el.remove();
+        allQueries = allQueries.filter(function(x) { return x.id !== id; });
+        renderStats();
+        if (document.querySelectorAll(".result-item").length === 0) {
+          document.getElementById("empty-state").style.display = "";
+        }
+      } catch (err) {
+        console.error("Failed to delete:", err);
+      }
     }
 
     function createResultItem(q, isNew) {
+      trackModel(q.model);
       var item = document.createElement("div");
       item.className = "result-item " + q.status;
       if (isNew) item.classList.add("new");
       item.id = "result-" + q.id;
+      item.setAttribute("data-model", q.model);
+
+      var del = document.createElement("button");
+      del.className = "result-delete";
+      del.textContent = "\u2715";
+      del.onclick = function() { deleteResult(q.id); };
+      item.appendChild(del);
 
       var meal = document.createElement("div");
       meal.className = "result-meal";
@@ -529,6 +667,13 @@
       modelBadge.className = "result-badge badge-model";
       modelBadge.textContent = q.model;
       meta.appendChild(modelBadge);
+
+      if (q.reasoningEffort) {
+        var effortBadge = document.createElement("span");
+        effortBadge.className = "result-badge badge-effort";
+        effortBadge.textContent = "effort: " + q.reasoningEffort;
+        meta.appendChild(effortBadge);
+      }
 
       if (q.status === "pending") {
         var pendingBadge = document.createElement("span");
@@ -680,6 +825,7 @@
     });
 
     // ---- Init ----
+    toggleReasoningEffort();
     loadQueries();
     connectWebSocket();
   </script>

@@ -50,15 +50,16 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	CalorieQuery struct {
-		Calories       func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		ErrorMessage   func(childComplexity int) int
-		ID             func(childComplexity int) int
-		MealText       func(childComplexity int) int
-		Model          func(childComplexity int) int
-		ResponseTimeMs func(childComplexity int) int
-		Status         func(childComplexity int) int
-		TotalTokens    func(childComplexity int) int
+		Calories        func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		ErrorMessage    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		MealText        func(childComplexity int) int
+		Model           func(childComplexity int) int
+		ReasoningEffort func(childComplexity int) int
+		ResponseTimeMs  func(childComplexity int) int
+		Status          func(childComplexity int) int
+		TotalTokens     func(childComplexity int) int
 	}
 
 	JobResult struct {
@@ -79,10 +80,12 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateRoom         func(childComplexity int, name string) int
-		SendMessage        func(childComplexity int, room string, sender string, text string) int
-		SubmitCalorieQuery func(childComplexity int, mealText string, modelName string) int
-		SurpriseMe         func(childComplexity int, room string, sender string, text string) int
+		ClearCalorieQueries func(childComplexity int) int
+		CreateRoom          func(childComplexity int, name string) int
+		DeleteCalorieQuery  func(childComplexity int, id string) int
+		SendMessage         func(childComplexity int, room string, sender string, text string) int
+		SubmitCalorieQuery  func(childComplexity int, mealText string, modelName string, reasoningEffort *string) int
+		SurpriseMe          func(childComplexity int, room string, sender string, text string) int
 	}
 
 	Query struct {
@@ -108,7 +111,9 @@ type MutationResolver interface {
 	CreateRoom(ctx context.Context, name string) (*model.Room, error)
 	SendMessage(ctx context.Context, room string, sender string, text string) (*model.Message, error)
 	SurpriseMe(ctx context.Context, room string, sender string, text string) (*model.Message, error)
-	SubmitCalorieQuery(ctx context.Context, mealText string, modelName string) (*model.CalorieQuery, error)
+	SubmitCalorieQuery(ctx context.Context, mealText string, modelName string, reasoningEffort *string) (*model.CalorieQuery, error)
+	ClearCalorieQueries(ctx context.Context) (bool, error)
+	DeleteCalorieQuery(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	Rooms(ctx context.Context) ([]*model.Room, error)
@@ -182,6 +187,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CalorieQuery.Model(childComplexity), true
+
+	case "CalorieQuery.reasoningEffort":
+		if e.complexity.CalorieQuery.ReasoningEffort == nil {
+			break
+		}
+
+		return e.complexity.CalorieQuery.ReasoningEffort(childComplexity), true
 
 	case "CalorieQuery.responseTimeMs":
 		if e.complexity.CalorieQuery.ResponseTimeMs == nil {
@@ -281,6 +293,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Message.Upvotes(childComplexity), true
 
+	case "Mutation.clearCalorieQueries":
+		if e.complexity.Mutation.ClearCalorieQueries == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ClearCalorieQueries(childComplexity), true
+
 	case "Mutation.createRoom":
 		if e.complexity.Mutation.CreateRoom == nil {
 			break
@@ -292,6 +311,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRoom(childComplexity, args["name"].(string)), true
+
+	case "Mutation.deleteCalorieQuery":
+		if e.complexity.Mutation.DeleteCalorieQuery == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCalorieQuery_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCalorieQuery(childComplexity, args["id"].(string)), true
 
 	case "Mutation.sendMessage":
 		if e.complexity.Mutation.SendMessage == nil {
@@ -315,7 +346,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SubmitCalorieQuery(childComplexity, args["mealText"].(string), args["modelName"].(string)), true
+		return e.complexity.Mutation.SubmitCalorieQuery(childComplexity, args["mealText"].(string), args["modelName"].(string), args["reasoningEffort"].(*string)), true
 
 	case "Mutation.surpriseMe":
 		if e.complexity.Mutation.SurpriseMe == nil {
@@ -567,6 +598,21 @@ func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteCalorieQuery_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_sendMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -621,6 +667,15 @@ func (ec *executionContext) field_Mutation_submitCalorieQuery_args(ctx context.C
 		}
 	}
 	args["modelName"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["reasoningEffort"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasoningEffort"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["reasoningEffort"] = arg2
 	return args, nil
 }
 
@@ -899,6 +954,47 @@ func (ec *executionContext) _CalorieQuery_model(ctx context.Context, field graph
 }
 
 func (ec *executionContext) fieldContext_CalorieQuery_model(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CalorieQuery",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CalorieQuery_reasoningEffort(ctx context.Context, field graphql.CollectedField, obj *model.CalorieQuery) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CalorieQuery_reasoningEffort(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReasoningEffort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CalorieQuery_reasoningEffort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CalorieQuery",
 		Field:      field,
@@ -1860,7 +1956,7 @@ func (ec *executionContext) _Mutation_submitCalorieQuery(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SubmitCalorieQuery(rctx, fc.Args["mealText"].(string), fc.Args["modelName"].(string))
+		return ec.resolvers.Mutation().SubmitCalorieQuery(rctx, fc.Args["mealText"].(string), fc.Args["modelName"].(string), fc.Args["reasoningEffort"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1891,6 +1987,8 @@ func (ec *executionContext) fieldContext_Mutation_submitCalorieQuery(ctx context
 				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
 			case "model":
 				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "reasoningEffort":
+				return ec.fieldContext_CalorieQuery_reasoningEffort(ctx, field)
 			case "calories":
 				return ec.fieldContext_CalorieQuery_calories(ctx, field)
 			case "responseTimeMs":
@@ -1915,6 +2013,105 @@ func (ec *executionContext) fieldContext_Mutation_submitCalorieQuery(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_submitCalorieQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_clearCalorieQueries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_clearCalorieQueries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ClearCalorieQueries(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_clearCalorieQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteCalorieQuery(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteCalorieQuery(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCalorieQuery(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteCalorieQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteCalorieQuery_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2085,6 +2282,8 @@ func (ec *executionContext) fieldContext_Query_calorieQueries(ctx context.Contex
 				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
 			case "model":
 				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "reasoningEffort":
+				return ec.fieldContext_CalorieQuery_reasoningEffort(ctx, field)
 			case "calories":
 				return ec.fieldContext_CalorieQuery_calories(ctx, field)
 			case "responseTimeMs":
@@ -2627,6 +2826,8 @@ func (ec *executionContext) fieldContext_Subscription_calorieQueryCompleted(ctx 
 				return ec.fieldContext_CalorieQuery_mealText(ctx, field)
 			case "model":
 				return ec.fieldContext_CalorieQuery_model(ctx, field)
+			case "reasoningEffort":
+				return ec.fieldContext_CalorieQuery_reasoningEffort(ctx, field)
 			case "calories":
 				return ec.fieldContext_CalorieQuery_calories(ctx, field)
 			case "responseTimeMs":
@@ -4453,6 +4654,8 @@ func (ec *executionContext) _CalorieQuery(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "reasoningEffort":
+			out.Values[i] = ec._CalorieQuery_reasoningEffort(ctx, field, obj)
 		case "calories":
 			out.Values[i] = ec._CalorieQuery_calories(ctx, field, obj)
 		case "responseTimeMs":
@@ -4660,6 +4863,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "submitCalorieQuery":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_submitCalorieQuery(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clearCalorieQueries":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_clearCalorieQueries(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteCalorieQuery":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCalorieQuery(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

@@ -42,7 +42,7 @@ gqlgen generates `generated.go` from the schema. Files like `server.go` and `sch
 
 ## Model Binding
 
-`Message`, `Room`, and `JobResult` are defined in `graph/model/model.go` and bound in `gqlgen.yml`. This avoids duplicate type generation and lets `resolver.go` reference these types during the gqlgen stage.
+`Message`, `Room`, `JobResult`, and `CalorieQuery` are defined in `graph/model/model.go` and bound in `gqlgen.yml`. This avoids duplicate type generation and lets `resolver.go` reference these types during the gqlgen stage.
 
 ## Job Queue Pattern
 
@@ -52,11 +52,18 @@ Jobs store only reference IDs (e.g. `message_id`), not data. The worker fetches 
 
 Scoped to this project via `traefik.project=gotesting` label constraint. This prevents Traefik from picking up containers from other compose projects on the same Docker daemon.
 
+## LLM Integration
+
+`api/llm/llm.go` is a unified LLM client supporting OpenAI (gpt-5.4, gpt-5.4-mini, gpt-5.4-nano) and Google Gemini models. OpenAI calls support a `reasoning_effort` parameter (none/low/medium/high/xhigh) passed via the `shared.ReasoningEffort` type from the `openai-go/v3` SDK. Gemini calls ignore reasoning effort. The client is wired into the calorie estimation worker via a function field (`CallLLM`) to maintain the resolver ↔ jobs decoupling.
+
 ## Key Files
 
 - `api/graph/schema.graphqls` — GraphQL schema (source of truth for types/operations)
 - `api/graph/resolver.go` — Resolver struct, subscriber maps, HandleJobComplete
 - `api/graph/schema.resolvers.go` — Resolver implementations (auto-regenerated header by gqlgen)
 - `api/server.go` — Main entry: DB, River, GraphQL wiring
-- `api/jobs/process_message.go` — River worker
+- `api/jobs/process_message.go` — River worker (chat message processing)
+- `api/jobs/estimate_calories.go` — River worker (LLM calorie estimation)
+- `api/llm/llm.go` — LLM client (OpenAI + Gemini)
 - `api/db/db.go` — Database layer + migrations
+- `web/templates/calories.html` — Calorie counter UI (model selection, reasoning effort, results with filter/delete)
