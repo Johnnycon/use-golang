@@ -16,10 +16,10 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 	"github.com/riverqueue/river/rivermigrate"
 
-	"github.com/gotesting/api/db"
-	"github.com/gotesting/api/graph"
-	"github.com/gotesting/api/jobs"
-	"github.com/gotesting/api/llm"
+	"github.com/use-golang/api/db"
+	"github.com/use-golang/api/graph"
+	"github.com/use-golang/api/jobs"
+	"github.com/use-golang/api/llm"
 )
 
 func main() {

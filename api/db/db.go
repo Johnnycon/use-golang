@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/gotesting/api/graph/model"
+	"github.com/use-golang/api/graph/model"
 )
 
 //go:embed migrations/*.sql

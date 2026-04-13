@@ -18,13 +18,13 @@ resolver:
 models:
   Room:
     model:
-      - github.com/gotesting/api/graph/model.Room
+      - github.com/use-golang/api/graph/model.Room
   Message:
     model:
-      - github.com/gotesting/api/graph/model.Message
+      - github.com/use-golang/api/graph/model.Message
   JobResult:
     model:
-      - github.com/gotesting/api/graph/model.JobResult
+      - github.com/use-golang/api/graph/model.JobResult
   CalorieQuery:
     model:
-      - github.com/gotesting/api/graph/model.CalorieQuery
+      - github.com/use-golang/api/graph/model.CalorieQuery

@@ -15,7 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/gotesting/api/graph/model"
+	"github.com/use-golang/api/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -1771,7 +1771,7 @@ func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Room)
 	fc.Result = res
-	return ec.marshalNRoom2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1832,7 +1832,7 @@ func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Message)
 	fc.Result = res
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1901,7 +1901,7 @@ func (ec *executionContext) _Mutation_surpriseMe(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Message)
 	fc.Result = res
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_surpriseMe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1970,7 +1970,7 @@ func (ec *executionContext) _Mutation_submitCalorieQuery(ctx context.Context, fi
 	}
 	res := resTmp.(*model.CalorieQuery)
 	fc.Result = res
-	return ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res)
+	return ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_submitCalorieQuery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2146,7 +2146,7 @@ func (ec *executionContext) _Query_rooms(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Room)
 	fc.Result = res
-	return ec.marshalNRoom2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoomᚄ(ctx, field.Selections, res)
+	return ec.marshalNRoom2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoomᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_rooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2196,7 +2196,7 @@ func (ec *executionContext) _Query_messages(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Message)
 	fc.Result = res
-	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_messages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2265,7 +2265,7 @@ func (ec *executionContext) _Query_calorieQueries(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.CalorieQuery)
 	fc.Result = res
-	return ec.marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx, field.Selections, res)
+	return ec.marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_calorieQueries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2556,7 +2556,7 @@ func (ec *executionContext) _Subscription_messageSent(ctx context.Context, field
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -2639,7 +2639,7 @@ func (ec *executionContext) _Subscription_jobCompleted(ctx context.Context, fiel
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNJobResult2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐJobResult(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNJobResult2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐJobResult(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -2720,7 +2720,7 @@ func (ec *executionContext) _Subscription_surpriseUpvoteCompleted(ctx context.Co
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -2803,7 +2803,7 @@ func (ec *executionContext) _Subscription_calorieQueryCompleted(ctx context.Cont
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -5431,11 +5431,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCalorieQuery2githubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v model.CalorieQuery) graphql.Marshaler {
+func (ec *executionContext) marshalNCalorieQuery2githubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v model.CalorieQuery) graphql.Marshaler {
 	return ec._CalorieQuery(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CalorieQuery) graphql.Marshaler {
+func (ec *executionContext) marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQueryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CalorieQuery) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5459,7 +5459,7 @@ func (ec *executionContext) marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotesting�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, sel, v[i])
+			ret[i] = ec.marshalNCalorieQuery2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5479,7 +5479,7 @@ func (ec *executionContext) marshalNCalorieQuery2ᚕᚖgithubᚗcomᚋgotesting�
 	return ret
 }
 
-func (ec *executionContext) marshalNCalorieQuery2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v *model.CalorieQuery) graphql.Marshaler {
+func (ec *executionContext) marshalNCalorieQuery2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐCalorieQuery(ctx context.Context, sel ast.SelectionSet, v *model.CalorieQuery) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5519,11 +5519,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNJobResult2githubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐJobResult(ctx context.Context, sel ast.SelectionSet, v model.JobResult) graphql.Marshaler {
+func (ec *executionContext) marshalNJobResult2githubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐJobResult(ctx context.Context, sel ast.SelectionSet, v model.JobResult) graphql.Marshaler {
 	return ec._JobResult(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNJobResult2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐJobResult(ctx context.Context, sel ast.SelectionSet, v *model.JobResult) graphql.Marshaler {
+func (ec *executionContext) marshalNJobResult2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐJobResult(ctx context.Context, sel ast.SelectionSet, v *model.JobResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5533,11 +5533,11 @@ func (ec *executionContext) marshalNJobResult2ᚖgithubᚗcomᚋgotestingᚋapi�
 	return ec._JobResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMessage2githubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2githubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v model.Message) graphql.Marshaler {
 	return ec._Message(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5561,7 +5561,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋgotestingᚋapi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
+			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5581,7 +5581,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋgotestingᚋapi
 	return ret
 }
 
-func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5591,11 +5591,11 @@ func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋgotestingᚋapiᚋ
 	return ec._Message(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRoom2githubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v model.Room) graphql.Marshaler {
+func (ec *executionContext) marshalNRoom2githubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v model.Room) graphql.Marshaler {
 	return ec._Room(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRoom2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoomᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Room) graphql.Marshaler {
+func (ec *executionContext) marshalNRoom2ᚕᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoomᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Room) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -5619,7 +5619,7 @@ func (ec *executionContext) marshalNRoom2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRoom2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoom(ctx, sel, v[i])
+			ret[i] = ec.marshalNRoom2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoom(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -5639,7 +5639,7 @@ func (ec *executionContext) marshalNRoom2ᚕᚖgithubᚗcomᚋgotestingᚋapiᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNRoom2ᚖgithubᚗcomᚋgotestingᚋapiᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v *model.Room) graphql.Marshaler {
+func (ec *executionContext) marshalNRoom2ᚖgithubᚗcomᚋuseᚑgolangᚋapiᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v *model.Room) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

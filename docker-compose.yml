@@ -4,7 +4,7 @@ services:
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.constraints=Label(`traefik.project`,`gotesting`)"
+      - "--providers.docker.constraints=Label(`traefik.project`,`use-golang`)"
       - "--entrypoints.web.address=:80"
       - "--api.insecure=true"                    # dashboard on :8080
     ports:
@@ -34,7 +34,7 @@ services:
       context: ./api
     labels:
       - "traefik.enable=true"
-      - "traefik.project=gotesting"
+      - "traefik.project=use-golang"
       - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.api.entrypoints=web"
       - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
@@ -52,7 +52,7 @@ services:
     image: ghcr.io/riverqueue/riverui:0.3.1
     labels:
       - "traefik.enable=true"
-      - "traefik.project=gotesting"
+      - "traefik.project=use-golang"
       - "traefik.http.routers.riverui.rule=Host(`riverui.localhost`)"
       - "traefik.http.routers.riverui.entrypoints=web"
       - "traefik.http.services.riverui.loadbalancer.server.port=8080"
@@ -67,7 +67,7 @@ services:
       context: ./web
     labels:
       - "traefik.enable=true"
-      - "traefik.project=gotesting"
+      - "traefik.project=use-golang"
       - "traefik.http.routers.web.rule=PathPrefix(`/`)"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=3080"
