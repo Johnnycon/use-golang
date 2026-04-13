@@ -100,7 +100,7 @@ Enter a name, create or join a room, and start chatting. Messages appear in real
 All HTTP traffic enters through Traefik on port 8888:
 - **Path-based routing:** `/` → web, `/api/` → API (prefix stripped)
 - **Host-based routing:** `riverui.localhost` → River UI (SPAs with internal `/api/` paths break with prefix stripping)
-- Scoped to this project via label constraint (`traefik.project=gotesting`)
+- Scoped to this project via label constraint (`traefik.project=use-golang`)
 - WebSocket connections are proxied transparently (Traefik handles the HTTP → WS upgrade)
 
 ### Code Generation (gqlgen)

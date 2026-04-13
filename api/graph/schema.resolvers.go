@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gotesting/api/graph/model"
+	"github.com/use-golang/api/graph/model"
 )
 
 // CreateRoom is the resolver for the createRoom field.

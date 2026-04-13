@@ -8,8 +8,8 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/gotesting/api/db"
-	"github.com/gotesting/api/graph/model"
+	"github.com/use-golang/api/db"
+	"github.com/use-golang/api/graph/model"
 )
 
 // SurpriseUpvoteArgs stores only the message ID — the worker fetches

@@ -8,7 +8,7 @@ import (
 
 	"github.com/riverqueue/river"
 
-	"github.com/gotesting/api/db"
+	"github.com/use-golang/api/db"
 )
 
 // ProcessMessageArgs stores only the message ID — the worker fetches

@@ -50,7 +50,7 @@ Jobs store only reference IDs (e.g. `message_id`), not data. The worker fetches 
 
 ## Traefik
 
-Scoped to this project via `traefik.project=gotesting` label constraint. This prevents Traefik from picking up containers from other compose projects on the same Docker daemon.
+Scoped to this project via `traefik.project=use-golang` label constraint. This prevents Traefik from picking up containers from other compose projects on the same Docker daemon.
 
 ## LLM Integration
 

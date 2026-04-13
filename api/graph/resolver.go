@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gotesting/api/db"
-	"github.com/gotesting/api/graph/model"
+	"github.com/use-golang/api/db"
+	"github.com/use-golang/api/graph/model"
 )
 
 // subscriber tracks a WebSocket channel for chat messages.
